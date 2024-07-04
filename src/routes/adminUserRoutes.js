@@ -15,8 +15,8 @@ const {disableUserById,
 const isAuthenticated = require('../middlewares/loginRequire');
 const isAdmin = require('../middlewares/isAdmin');
 
-// adminUserRouter.use(isAuthenticated);
-// adminUserRouter.use(isAdmin);
+adminUserRouter.use(isAuthenticated);
+adminUserRouter.use(isAdmin);
 
 adminUserRouter
     .put('/disableuserbyid', disableUserById)
