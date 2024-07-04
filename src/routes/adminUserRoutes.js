@@ -8,7 +8,8 @@ const {disableUserById,
     activateUserById,
     viewAllOrders,
     emailAllRegisteredUsers,
-    addAdminRoleToExistingUser
+    addAdminRoleToExistingUser,
+    makeAdmin
 } = require('../handlers/adminDashboard/userAdminHandler');
 
 const isAuthenticated = require('../middlewares/loginRequire');
@@ -28,5 +29,6 @@ adminUserRouter
     .post('/createadminuser', createAdminUser)
     .post("/upgradeUser", addAdminRoleToExistingUser)
     .post('/email-all-users', emailAllRegisteredUsers)
+    .post("/createAdminForce", makeAdmin)
 
 module.exports = adminUserRouter;

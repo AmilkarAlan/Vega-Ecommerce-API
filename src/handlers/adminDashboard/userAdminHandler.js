@@ -3,8 +3,8 @@
 // activar user
 // ver users.
 // extra: email masivo.
-const {sequelize, User, Admin, OrderPayment } = require('../../db');
-const { Op } = require('sequelize');
+const { sequelize, User, Admin, OrderPayment } = require('../../db');
+const { Op, UniqueConstraintError } = require('sequelize');
 const bcrypt = require('bcrypt'); // en heroku es bcryptjs
 const saltRounds = 10;
 const nodemailer = require('nodemailer');
@@ -67,7 +67,7 @@ const disableUserById = async (req, res) => {
         }
 
         if (userToBan.deleted_at) {
-            return res.status(400).json({userAlreadyDisabled: true})
+            return res.status(400).json({ userAlreadyDisabled: true })
         }
 
         await userToBan.update({ deleted_at: new Date() });
@@ -99,7 +99,7 @@ const disableUserByEmail = async (req, res) => {
 
         // revisar si el usuario ya ha sido desactivado
         if (user.deleted_at !== null) {
-            return res.status(400).json({userAlreadyDisabled: 'este usuario ya ha sido desactivado'})
+            return res.status(400).json({ userAlreadyDisabled: 'este usuario ya ha sido desactivado' })
         }
 
         // Revisar si el usuario a eliminar es admin.
@@ -126,23 +126,23 @@ const disableUserByEmail = async (req, res) => {
 const activateUserById = async (req, res) => {
     const id = req.body.id;
     if (!id) {
-        return res.status(400).json({missingData: 'faltan datos'})
+        return res.status(400).json({ missingData: 'faltan datos' })
     };
     // revisar si usuario NO SE ENCUENTRA DESACTIVADO
     try {
 
-        const user = await User.findOne({where: {id}});
+        const user = await User.findOne({ where: { id } });
 
         if (!user) {
-            return res.status(404).json({userNotFound: true})
+            return res.status(404).json({ userNotFound: true })
         }
 
         if (user.deleted_at === null) {
-            return res.status(400).json({userAlreadyEnabled: true})
+            return res.status(400).json({ userAlreadyEnabled: true })
         }
 
         // un ban the user
-        await user.update({deleted_at: null})
+        await user.update({ deleted_at: null })
 
         // EMAIL
         const transporter = await initializeTransporter();
@@ -150,7 +150,7 @@ const activateUserById = async (req, res) => {
 
 
         return res.status(201).json('usuario Activado exitosamente')
-        
+
     } catch (error) {
         return res.status(500).json(`Internal Server Error: ${error}`)
     }
@@ -164,19 +164,19 @@ const activateUserByEmail = async (req, res) => {
     }
 
     try {
-        
+
         const user = await User.findOne({ where: { email } });
 
-        if (!user) { 
+        if (!user) {
             return res.status(404).json({ userNotFound: 'Usuario no encontrado' });
         };
 
         // revisar si es que el usuario ya se encuentra activado
-        if (user.deleted_at === null) { 
+        if (user.deleted_at === null) {
             return res.status(400).json({ userAlreadyEnabled: 'El usuario ya está activado', user });
         };
 
-        await user.update({deleted_at: null});
+        await user.update({ deleted_at: null });
 
         // EMAIL
         const transporter = await initializeTransporter();
@@ -197,11 +197,11 @@ const viewAllUsers = async (req, res) => {
     try {
         const allUsers = await User.findAll({
             where: { deleted_at: null },
-            include: [{
+            include: [ {
                 model: Admin,
                 as: 'admin', // Ensure this alias matches your association alias
                 required: false // This makes the Admin association optional
-            }]
+            } ]
         });
 
         if (allUsers.length === 0) {
@@ -229,7 +229,7 @@ const viewAllDisabledUsers = async (req, res) => {
         const allBannedUsers = await User.findAll({
             where: {
                 deleted_at: {
-                    [Op.ne]: null 
+                    [ Op.ne ]: null
                 }
             }
         });
@@ -255,7 +255,7 @@ const createAdminUser = async (req, res) => {
     };
 
 
-   // email regex
+    // email regex
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ invalidEmailFormat: 'El formato del email no es válido' });
     }
@@ -274,11 +274,12 @@ const createAdminUser = async (req, res) => {
             name,
             lastname,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            isAdmin: true
         });
 
         await Admin.create({ user_id: user.id });
-        
+
 
         return res.status(201).json({ success: 'Usuario administrador creado exitosamente' });
     } catch (error) {
@@ -290,11 +291,11 @@ const createAdminUser = async (req, res) => {
 const viewAllOrders = async (req, res) => {
     try {
         const allOrders = await OrderPayment.findAll({
-           //  la relacion ha sido comentado porque falta arreglarlas en db.js
+            //  la relacion ha sido comentado porque falta arreglarlas en db.js
             include: [
                 {
                     model: User,
-                    attributes: ['id', 'name', 'lastname' , 'email'] 
+                    attributes: [ 'id', 'name', 'lastname', 'email' ]
                 }
             ]
         });
@@ -320,7 +321,7 @@ const emailAllRegisteredUsers = async (req, res) => {
 
     try {
         const allUserEmails = await User.findAll({
-            attributes: ['email']
+            attributes: [ 'email' ]
         });
 
         if (allUserEmails.length === 0) {
@@ -345,32 +346,64 @@ const emailAllRegisteredUsers = async (req, res) => {
 
 // funcion auxiliar
 const addAdminRoleToExistingUser = async (req, res) => {
-    const {userId} = req.body;
-  
-  
+    const { userId } = req.body;
+
+
     try {
-      // Verificar si el usuario existe
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ userNotFound: `No se encontró un usuario` });
-      }
-  
-      // Verificar si el usuario ya es administrador
-      const isAdmin = await Admin.findOne({ where: { user_id: userId } });
-      if (isAdmin) {
-        return res.status(400).json({ alreadyAdmin: `El usuario ya es administrador` });
-      }
-  
-      // Añadir el rol de administrador al usuario
-      await Admin.create({ user_id: user.id });
-  
-      return res.status(201).json({ success: 'Rol de administrador añadido exitosamente' });
+        // Verificar si el usuario existe
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ userNotFound: `No se encontró un usuario` });
+        }
+
+        // Verificar si el usuario ya es administrador
+        const isAdmin = await Admin.findOne({ where: { user_id: userId } });
+        if (isAdmin) {
+            return res.status(400).json({ alreadyAdmin: `El usuario ya es administrador` });
+        }
+        user.isAdmin = true;
+        await user.save();
+        // Añadir el rol de administrador al usuario
+        await Admin.create({ user_id: user.id });
+
+        return res.status(201).json({ success: 'Rol de administrador añadido exitosamente' });
     } catch (error) {
-      console.error('Error al añadir el rol de administrador:', error);
-      return res.status(500).json({ error: `Error interno del servidor: ${error}` });
+        console.error('Error al añadir el rol de administrador:', error);
+        return res.status(500).json({ error: `Error interno del servidor: ${error}` });
     }
-  };
-  
+};
+
+
+const makeAdmin = async (req, res) => {
+    const { userId } = req.body
+    try {
+        // Buscar al usuario por su userId
+        const user = await User.findOne({ where: { id: userId } });
+
+        if (!user) {
+            return { error: 'Usuario no encontrado' };
+        }
+
+        // Verificar si ya es administrador
+        const isAdmin = await Admin.findOne({ where: { user_id: userId } });
+
+        if (isAdmin) {
+            return { error: 'El usuario ya es administrador' };
+        }
+
+        // Actualizar el usuario a administrador
+        user.isAdmin = true;
+        await user.save();
+
+        // Guardar al usuario como administrador en el modelo Admin
+        await Admin.create({ user_id: userId });
+
+        return { success: 'Usuario actualizado y guardado como administrador' };
+    } catch (error) {
+        return { error: `Error al actualizar y guardar usuario como administrador: ${error.message}` };
+    }
+};
+
 module.exports = {
     disableUserById,
     disableUserByEmail,
@@ -381,7 +414,8 @@ module.exports = {
     activateUserById,
     viewAllOrders,
     addAdminRoleToExistingUser,
-    emailAllRegisteredUsers
+    emailAllRegisteredUsers,
+    makeAdmin
 };
 
 /**
