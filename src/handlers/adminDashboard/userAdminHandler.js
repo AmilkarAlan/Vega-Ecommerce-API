@@ -376,6 +376,7 @@ const addAdminRoleToExistingUser = async (req, res) => {
 
 const makeAdmin = async (req, res) => {
     const { userId } = req.body
+    console.log(userId);
     try {
         // Buscar al usuario por su userId
         const user = await User.findOne({ where: { id: userId } });
