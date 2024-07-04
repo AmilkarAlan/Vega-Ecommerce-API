@@ -379,7 +379,7 @@ const makeAdmin = async (req, res) => {
     console.log(userId);
     try {
         // Buscar al usuario por su userId
-        const user = await User.findOne({ where: { id: userId } });
+        const user = await User.findByPk(userId);
 
         if (!user) {
             return { error: 'Usuario no encontrado' };
