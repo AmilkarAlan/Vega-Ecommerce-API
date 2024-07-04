@@ -382,14 +382,14 @@ const makeAdmin = async (req, res) => {
         const user = await User.findByPk(userId);
 
         if (!user) {
-            return { error: 'Usuario no encontrado' };
+            return res.status(404).send({ error: 'Usuario no encontrado' });
         }
 
         // Verificar si ya es administrador
         const isAdmin = await Admin.findOne({ where: { user_id: userId } });
 
         if (isAdmin) {
-            return { error: 'El usuario ya es administrador' };
+            return res.status(400).send({ error: 'El usuario ya es administrador' });
         }
 
         // Actualizar el usuario a administrador
@@ -399,7 +399,7 @@ const makeAdmin = async (req, res) => {
         // Guardar al usuario como administrador en el modelo Admin
         await Admin.create({ user_id: userId });
 
-        return { success: 'Usuario actualizado y guardado como administrador' };
+        return res.status(201).send({ success: 'Usuario actualizado y guardado como administrador' });
     } catch (error) {
         return { error: `Error al actualizar y guardar usuario como administrador: ${error.message}` };
     }
