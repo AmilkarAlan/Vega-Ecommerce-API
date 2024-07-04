@@ -73,8 +73,7 @@ const getFilteredTemplates = async ({
         {
           model: Review,
           as: 'reviews'
-        },
-        
+        }
       ],
       order: orderArray.length ? orderArray : undefined,
       limit: limit !== null ? limit : undefined,
