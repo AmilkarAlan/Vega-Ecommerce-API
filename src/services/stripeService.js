@@ -44,8 +44,8 @@ const paymentIntent = async (userId) => {
         quantity: 1,
       })),
       mode: 'payment',
-      success_url: `http://localhost:5173/paySuccess`,
-      cancel_url: `http://localhost:5173/payCancel`,
+      success_url: `https://pf-front-end-ecommerce-vega.vercel.app/paySuccess`,
+      cancel_url: `https://pf-front-end-ecommerce-vega.vercel.app/payCancel`,
     });
 
     order.stripe_session_id = session.id;
