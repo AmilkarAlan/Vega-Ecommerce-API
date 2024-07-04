@@ -26,7 +26,8 @@ module.exports = (sequelize) => {
   },
 
     date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
+      //allowNull:false,
       defaultValue: sequelize.NOW
     },
 
@@ -35,4 +36,3 @@ module.exports = (sequelize) => {
     timestamps: false
   });
 };
-

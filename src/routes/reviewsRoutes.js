@@ -10,8 +10,8 @@ reviewsRouter
     .get('/', loginRequire, getReviewsUser)
     .put('/:id', loginRequire,updateReview)
     .delete('/:id', loginRequire, deleteReview);
-
-
-
+    
+   
+    
 
 module.exports = reviewsRouter;
