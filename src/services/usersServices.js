@@ -32,14 +32,16 @@ const registerService = async (email, lastname, name, userPassword, image) => {
 const loginService = async (email, userPassword, firebaseToken) => {
 
   // verificar si usuario esta desactivado.
-  const user = await User.findOne({ where: { email } });
+  if (email) {
+    const user = await User.findOne({ where: { email } });
 
-        if (!user) {
-          return { status: 400, error: 'Usuario no encontrado.' };
-      };
-      if (user.deleted_at !== null) {
-          return { status: 403, error: 'Tu cuenta ha sido desactivada.' };
-      };
+    if (!user) {
+      return { status: 400, error: 'Usuario no encontrado.' };
+    };
+    if (user.deleted_at !== null) {
+      return { status: 403, error: 'Tu cuenta ha sido desactivada.' };
+    };
+  }
 
   try {
     let user;
@@ -168,6 +170,13 @@ const getProfile = async (req, res) => {
         {
           model: Order,
           foreignKey: 'user_id',
+          include: [ {
+            model: Template,
+            as: 'purchasedTemplates',
+            through: {
+              attributes: []
+            }
+          } ]
         }
       ]
     });
